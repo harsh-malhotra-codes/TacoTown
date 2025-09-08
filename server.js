@@ -169,10 +169,13 @@ app.get('/health', (req, res) => {
 // Serve static files from current directory (should be after API routes)
 app.use(express.static('.'));
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/health`);
-});
-
+// For Vercel deployment - export the app
 module.exports = app;
+
+// For local development
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        console.log(`Health check: http://localhost:${PORT}/health`);
+    });
+}
