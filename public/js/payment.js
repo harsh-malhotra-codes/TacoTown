@@ -445,7 +445,7 @@ async function saveOrderToBackend(orderId, orderData) {
         console.log('Sending order to backend:', backendOrderData);
 
         // Send to backend
-        const response = await fetch('http://localhost:3000/api/orders', {
+        const response = await fetch('/.netlify/functions/orders', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

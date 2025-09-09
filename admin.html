@@ -492,7 +492,7 @@
 
                 // Load orders from backend
                 try {
-                    const ordersResponse = await fetch('http://localhost:3000/api/orders');
+                    const ordersResponse = await fetch('/.netlify/functions/orders');
                     const ordersResult = await ordersResponse.json();
 
                     if (ordersResult.success) {
@@ -595,7 +595,7 @@
                 // First try to update in backend
                 let backendSuccess = false;
                 try {
-                    const response = await fetch(`http://localhost:3000/api/orders/${orderId}`, {
+                    const response = await fetch(`/.netlify/functions/orders/${orderId}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
@@ -637,7 +637,7 @@
                 // First try to delete from backend
                 let backendSuccess = false;
                 try {
-                    const response = await fetch(`http://localhost:3000/api/orders/${orderId}`, {
+                    const response = await fetch(`/.netlify/functions/orders/${orderId}`, {
                         method: 'DELETE'
                     });
 
