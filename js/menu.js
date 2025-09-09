@@ -202,11 +202,13 @@ function setupEventListeners() {
     }
 
     // Close cart when clicking outside
-    document.addEventListener('click', (e) => {
-        if (cartSidebar && cartIcon && !cartSidebar.contains(e.target) && !cartIcon.contains(e.target)) {
-            cartSidebar.classList.remove('active');
-        }
-    });
+    if (cartSidebar && cartIcon) {
+        document.addEventListener('click', (e) => {
+            if (!cartSidebar.contains(e.target) && !cartIcon.contains(e.target)) {
+                cartSidebar.classList.remove('active');
+            }
+        });
+    }
 
     // Handle cart item quantity changes
     if (cartSidebar) {
@@ -262,7 +264,9 @@ function setupEventListeners() {
     }
 
     // Navbar scroll effect
-    window.addEventListener('scroll', handleScroll);
+    if (navbar) {
+        window.addEventListener('scroll', handleScroll);
+    }
 }
 
 // Toggle mobile menu

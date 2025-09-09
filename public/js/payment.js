@@ -444,8 +444,20 @@ async function saveOrderToBackend(orderId, orderData) {
 
         console.log('Sending order to backend:', backendOrderData);
 
+        // Determine the correct endpoint based on environment
+        let endpoint;
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            // Local development - use local server
+            endpoint = '/api/orders';
+        } else {
+            // Production - use Netlify functions
+            endpoint = '/.netlify/functions/orders';
+        }
+
+        console.log('Using endpoint:', endpoint);
+
         // Send to backend
-        const response = await fetch('/.netlify/functions/orders', {
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
