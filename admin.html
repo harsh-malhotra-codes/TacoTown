@@ -492,29 +492,9 @@
 
                 // Load orders from backend
                 try {
-                    // Determine the correct endpoint based on environment
-                    let endpoint;
-                    const hostname = window.location.hostname;
-                    const href = window.location.href;
-                    const origin = window.location.origin;
-
-                    console.log('🔍 DEBUG INFO:');
-                    console.log('Admin: Full URL:', href);
-                    console.log('Admin: Origin:', origin);
-                    console.log('Admin: Hostname:', hostname);
-                    console.log('Admin: Hostname length:', hostname.length);
-                    console.log('Admin: Is localhost?', hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost') || hostname === '');
-                    console.log('Admin: Is Netlify?', hostname.includes('netlify'));
-
-                    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost') || hostname === '') {
-                        // Local development - use local server
-                        endpoint = '/api/orders';
-                        console.log('🏠 LOCAL MODE: Using local server');
-                    } else {
-                        // Production - use Netlify functions
-                        endpoint = '/.netlify/functions/orders';
-                        console.log('🌐 PRODUCTION MODE: Using Netlify functions');
-                    }
+                    // Always use Netlify functions in production
+                    const endpoint = '/.netlify/functions/orders';
+                    console.log('🌐 Using Netlify functions endpoint:', endpoint);
 
                     console.log('Admin: Final endpoint:', endpoint);
 
@@ -621,16 +601,8 @@
                 // First try to update in backend
                 let backendSuccess = false;
                 try {
-                    // Determine the correct endpoint based on environment
-                    let endpoint;
-                    const hostname = window.location.hostname;
-                    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost') || hostname === '') {
-                        // Local development - use local server
-                        endpoint = `/api/orders/${orderId}`;
-                    } else {
-                        // Production - use Netlify functions
-                        endpoint = `/.netlify/functions/orders/${orderId}`;
-                    }
+                    // Always use Netlify functions in production
+                    const endpoint = `/.netlify/functions/orders/${orderId}`;
 
                     const response = await fetch(endpoint, {
                         method: 'PUT',
@@ -674,16 +646,8 @@
                 // First try to delete from backend
                 let backendSuccess = false;
                 try {
-                    // Determine the correct endpoint based on environment
-                    let endpoint;
-                    const hostname = window.location.hostname;
-                    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost') || hostname === '') {
-                        // Local development - use local server
-                        endpoint = `/api/orders/${orderId}`;
-                    } else {
-                        // Production - use Netlify functions
-                        endpoint = `/.netlify/functions/orders/${orderId}`;
-                    }
+                    // Always use Netlify functions in production
+                    const endpoint = `/.netlify/functions/orders/${orderId}`;
 
                     const response = await fetch(endpoint, {
                         method: 'DELETE'
