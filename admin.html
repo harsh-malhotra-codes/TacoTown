@@ -502,10 +502,11 @@
                     console.log('Admin: Full URL:', href);
                     console.log('Admin: Origin:', origin);
                     console.log('Admin: Hostname:', hostname);
-                    console.log('Admin: Is localhost?', hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost'));
+                    console.log('Admin: Hostname length:', hostname.length);
+                    console.log('Admin: Is localhost?', hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost') || hostname === '');
                     console.log('Admin: Is Netlify?', hostname.includes('netlify'));
 
-                    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost')) {
+                    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost') || hostname === '') {
                         // Local development - use local server
                         endpoint = '/api/orders';
                         console.log('🏠 LOCAL MODE: Using local server');
@@ -623,7 +624,7 @@
                     // Determine the correct endpoint based on environment
                     let endpoint;
                     const hostname = window.location.hostname;
-                    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost')) {
+                    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost') || hostname === '') {
                         // Local development - use local server
                         endpoint = `/api/orders/${orderId}`;
                     } else {
@@ -676,7 +677,7 @@
                     // Determine the correct endpoint based on environment
                     let endpoint;
                     const hostname = window.location.hostname;
-                    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost')) {
+                    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost') || hostname === '') {
                         // Local development - use local server
                         endpoint = `/api/orders/${orderId}`;
                     } else {

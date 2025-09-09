@@ -2,11 +2,12 @@ const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 console.log('Testing Supabase connection...');
 console.log('URL:', supabaseUrl);
 console.log('Key exists:', !!supabaseKey);
+console.log('Key value:', supabaseKey ? '***' + supabaseKey.slice(-10) : 'undefined');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
