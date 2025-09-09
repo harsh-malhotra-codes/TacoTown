@@ -1,4 +1,4 @@
-.vercel
+c.vercel
 .env
 node_modules/
 *.log
