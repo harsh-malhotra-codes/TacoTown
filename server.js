@@ -17,16 +17,24 @@ console.log('URL:', supabaseUrl);
 console.log('Anon Key exists:', !!supabaseAnonKey);
 console.log('Service Role Key exists:', !!supabaseServiceRoleKey);
 
-// Regular client for user operations (subject to RLS)
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Initialize Supabase clients only if environment variables are available
+let supabase = null;
+let supabaseAdmin = null;
 
-// Admin client with service role key (bypasses RLS)
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
+if (supabaseUrl && supabaseAnonKey) {
+    // Regular client for user operations (subject to RLS)
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+}
+
+if (supabaseUrl && supabaseServiceRoleKey) {
+    // Admin client with service role key (bypasses RLS)
+    supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    });
+}
 
 // Middleware
 app.use(cors());
@@ -41,6 +49,13 @@ const orders = new Map();
 // Save order to Supabase
 app.post('/api/orders', async (req, res) => {
     try {
+        if (!supabase && !supabaseAdmin) {
+            return res.status(500).json({
+                success: false,
+                message: 'Database not configured'
+            });
+        }
+
         const {
             orderId,
             customerName,
@@ -62,7 +77,7 @@ app.post('/api/orders', async (req, res) => {
         }
 
         // Try with supabaseAdmin first (bypasses RLS)
-        let { data, error } = await supabaseAdmin
+        let { data, error } = supabaseAdmin ? await supabaseAdmin
             .from('orders')
             .insert([
                 {
@@ -75,10 +90,10 @@ app.post('/api/orders', async (req, res) => {
                     status: status
                 }
             ])
-            .select();
+            .select() : { data: null, error: new Error('Admin client not available') };
 
         // If admin fails, try regular client
-        if (error) {
+        if (error && supabase) {
             console.log('Admin insert failed, trying regular client:', error.message);
             ({ data, error } = await supabase
                 .from('orders')
@@ -122,6 +137,13 @@ app.post('/api/orders', async (req, res) => {
 // Get all orders from Supabase
 app.get('/api/orders', async (req, res) => {
     try {
+        if (!supabase) {
+            return res.status(500).json({
+                success: false,
+                message: 'Database not configured'
+            });
+        }
+
         const { data, error } = await supabase
             .from('orders')
             .select('*')
@@ -151,6 +173,13 @@ app.get('/api/orders', async (req, res) => {
 // Update order status
 app.put('/api/orders/:orderId', async (req, res) => {
     try {
+        if (!supabase) {
+            return res.status(500).json({
+                success: false,
+                message: 'Database not configured'
+            });
+        }
+
         const { orderId } = req.params;
         const { status } = req.body;
 
@@ -192,6 +221,13 @@ app.put('/api/orders/:orderId', async (req, res) => {
 // Delete order
 app.delete('/api/orders/:orderId', async (req, res) => {
     try {
+        if (!supabase) {
+            return res.status(500).json({
+                success: false,
+                message: 'Database not configured'
+            });
+        }
+
         const { orderId } = req.params;
 
         const { error } = await supabase
