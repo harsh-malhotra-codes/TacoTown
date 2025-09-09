@@ -80,6 +80,11 @@ function init() {
 
 // Display full menu with accordion
 function displayFullMenu() {
+    if (!categoryAccordion) {
+        console.warn('Category accordion element not found');
+        return;
+    }
+
     categoryAccordion.innerHTML = '';
 
     // Define the order of categories
@@ -172,71 +177,89 @@ function toggleAccordion(e) {
 // Setup event listeners
 function setupEventListeners() {
     // Mobile menu toggle
-    hamburger.addEventListener('click', toggleMobileMenu);
+    if (hamburger) {
+        hamburger.addEventListener('click', toggleMobileMenu);
+    }
 
     // Close mobile menu when clicking on a nav link
-    document.querySelectorAll('.nav-links a').forEach(link => {
-        link.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-                navLinks.classList.remove('active');
-                hamburger.classList.remove('active');
-            }
+    if (navLinks) {
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    navLinks.classList.remove('active');
+                    if (hamburger) hamburger.classList.remove('active');
+                }
+            });
         });
-    });
+    }
 
     // Cart toggle
-    cartIcon.addEventListener('click', toggleCart);
-    closeCart.addEventListener('click', toggleCart);
+    if (cartIcon) {
+        cartIcon.addEventListener('click', toggleCart);
+    }
+    if (closeCart) {
+        closeCart.addEventListener('click', toggleCart);
+    }
 
     // Close cart when clicking outside
     document.addEventListener('click', (e) => {
-        if (!cartSidebar.contains(e.target) && !cartIcon.contains(e.target)) {
+        if (cartSidebar && cartIcon && !cartSidebar.contains(e.target) && !cartIcon.contains(e.target)) {
             cartSidebar.classList.remove('active');
         }
     });
 
     // Handle cart item quantity changes
-    cartSidebar.addEventListener('click', (e) => {
-        const target = e.target;
-        const cartItem = target.closest('.cart-item');
+    if (cartSidebar) {
+        cartSidebar.addEventListener('click', (e) => {
+            const target = e.target;
+            const cartItem = target.closest('.cart-item');
 
-        if (!cartItem) return;
+            if (!cartItem) return;
 
-        const id = cartItem.dataset.id;
+            const id = cartItem.dataset.id;
 
-        if (target.classList.contains('decrease')) {
-            updateCartItemQuantity(id, -1);
-        } else if (target.classList.contains('increase')) {
-            updateCartItemQuantity(id, 1);
-        } else if (target.classList.contains('remove-item')) {
-            removeFromCart(id);
-        }
-    });
+            if (target.classList.contains('decrease')) {
+                updateCartItemQuantity(id, -1);
+            } else if (target.classList.contains('increase')) {
+                updateCartItemQuantity(id, 1);
+            } else if (target.classList.contains('remove-item')) {
+                removeFromCart(id);
+            }
+        });
+    }
 
     // Handle checkout
-    checkoutBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (cart.length > 0) {
-            window.location.href = 'payment.html'; // Proceed to payment without setting default data
-        } else {
-            alert('Your cart is empty. Add some tacos first!');
-        }
-    });
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (cart.length > 0) {
+                window.location.href = 'payment.html'; // Proceed to payment without setting default data
+            } else {
+                alert('Your cart is empty. Add some tacos first!');
+            }
+        });
+    }
 
     // Close modal
-    closeModal.addEventListener('click', () => {
-        deliveryModal.classList.remove('active');
-    });
+    if (closeModal && deliveryModal) {
+        closeModal.addEventListener('click', () => {
+            deliveryModal.classList.remove('active');
+        });
+    }
 
     // Close modal when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target === deliveryModal) {
-            deliveryModal.classList.remove('active');
-        }
-    });
+    if (deliveryModal) {
+        window.addEventListener('click', (e) => {
+            if (e.target === deliveryModal) {
+                deliveryModal.classList.remove('active');
+            }
+        });
+    }
 
     // Handle delivery form submission
-    deliveryForm.addEventListener('submit', handleDeliverySubmit);
+    if (deliveryForm) {
+        deliveryForm.addEventListener('submit', handleDeliverySubmit);
+    }
 
     // Navbar scroll effect
     window.addEventListener('scroll', handleScroll);
@@ -244,13 +267,19 @@ function setupEventListeners() {
 
 // Toggle mobile menu
 function toggleMobileMenu() {
-    navLinks.classList.toggle('active');
-    hamburger.classList.toggle('active');
+    if (navLinks) {
+        navLinks.classList.toggle('active');
+    }
+    if (hamburger) {
+        hamburger.classList.toggle('active');
+    }
 }
 
 // Toggle cart
 function toggleCart() {
-    cartSidebar.classList.toggle('active');
+    if (cartSidebar) {
+        cartSidebar.classList.toggle('active');
+    }
 }
 
 // Add item to cart
@@ -313,31 +342,37 @@ function removeFromCart(id) {
 // Update cart UI
 function updateCartUI() {
     // Update cart items
-    if (cart.length === 0) {
-        cartItems.innerHTML = '<p class="empty-cart">Your cart is empty</p>';
-        checkoutBtn.disabled = true;
-    } else {
-        cartItems.innerHTML = cart.map(item => `
-            <div class="cart-item" data-id="${item.id}">
-                <div class="cart-item-details">
-                    <h4>${item.name}</h4>
-                    <div class="cart-item-price">₹${(item.price * item.quantity).toFixed(2)}</div>
-                    <div class="cart-item-quantity">
-                        <button class="quantity-btn decrease">-</button>
-                        <span class="quantity">${item.quantity}</span>
-                        <button class="quantity-btn increase">+</button>
+    if (cartItems) {
+        if (cart.length === 0) {
+            cartItems.innerHTML = '<p class="empty-cart">Your cart is empty</p>';
+        } else {
+            cartItems.innerHTML = cart.map(item => `
+                <div class="cart-item" data-id="${item.id}">
+                    <div class="cart-item-details">
+                        <h4>${item.name}</h4>
+                        <div class="cart-item-price">₹${(item.price * item.quantity).toFixed(2)}</div>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn decrease">-</button>
+                            <span class="quantity">${item.quantity}</span>
+                            <button class="quantity-btn increase">+</button>
+                        </div>
                     </div>
+                    <i class="fas fa-times remove-item"></i>
                 </div>
-                <i class="fas fa-times remove-item"></i>
-            </div>
-        `).join('');
-
-        checkoutBtn.disabled = false;
+            `).join('');
+        }
     }
 
     // Update cart total
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    cartTotal.textContent = total.toFixed(2);
+    if (cartTotal) {
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        cartTotal.textContent = total.toFixed(2);
+    }
+
+    // Update checkout button
+    if (checkoutBtn) {
+        checkoutBtn.disabled = cart.length === 0;
+    }
 
     // Update cart count in header
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
