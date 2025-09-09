@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "name": "working-taco-copy",
   "builds": [
     {
       "src": "server.js",

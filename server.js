@@ -9,11 +9,19 @@ const PORT = process.env.PORT || 3000;
 
 // Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Initialize Supabase with service role key for admin operations
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+console.log('🔧 Supabase Configuration:');
+console.log('URL:', supabaseUrl);
+console.log('Anon Key exists:', !!supabaseAnonKey);
+console.log('Service Role Key exists:', !!supabaseServiceRoleKey);
+
+// Regular client for user operations (subject to RLS)
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Admin client with service role key (bypasses RLS)
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
         autoRefreshToken: false,
         persistSession: false
@@ -238,12 +246,12 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Serve static files from the root directory (more robust for Vercel)
-app.use(express.static(path.join(__dirname)));
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Explicitly serve index.html for the root route
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // For Vercel deployment - export the app
