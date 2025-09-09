@@ -6,182 +6,201 @@
     <title>Payment - Taco Town Cafe</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/payment-styles.css">
-    <link rel="icon" href="img/taco-logo.png" type="image/x-icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
+    <!-- Navigation -->
+    <nav class="navbar">
         <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <span class="logo-text">Taco Town Cafe</span>
+            <div class="logo">
+                <span>Taco Town Cafe</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="menu.html">Menu</a>
+                <a href="reviews.html">Reviews</a>
+                <a href="admin.html">Admin</a>
+                <div class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
                 </div>
-                <nav class="nav">
-                    <a href="index.html" class="nav-link">Home</a>
-                    <a href="menu.html" class="nav-link">Menu</a>
-                </nav>
+            </div>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
         </div>
-    </header>
+    </nav>
 
     <!-- Payment Section -->
     <section class="payment-section">
         <div class="container">
-            <div class="payment-container">
-                <!-- Progress Indicator -->
-                <div class="progress-container">
-                    <div class="progress-step completed">
-                        <div class="step-number">1</div>
-                        <div class="step-label">Cart</div>
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-step completed">
+                    <div class="step-number">1</div>
+                    <span>Cart</span>
+                </div>
+                <div class="progress-line completed"></div>
+                <div class="progress-step active">
+                    <div class="step-number">2</div>
+                    <span>Payment</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <div class="step-number">3</div>
+                    <span>Confirmation</span>
+                </div>
+            </div>
+
+            <div class="payment-content">
+                <!-- Customer Details -->
+                <div class="customer-details">
+                    <h3><i class="fas fa-clipboard-list"></i> Customer Details</h3>
+                    <form id="customer-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Name *</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone *</label>
+                                <input type="tel" id="phone" name="phone" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="email">Email *</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="pincode">Pincode *</label>
+                                <input type="text" id="pincode" name="pincode" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Address *</label>
+                            <textarea id="address" name="address" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="landmark">Landmark (Optional)</label>
+                            <input type="text" id="landmark" name="landmark">
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="order-summary">
+                    <h3>Order Summary</h3>
+                    <div id="order-items">
+                        <!-- Cart items will be populated here -->
                     </div>
-                    <div class="progress-line completed"></div>
-                    <div class="progress-step completed">
-                        <div class="step-number">2</div>
-                        <div class="step-label">Payment</div>
-                    </div>
-                    <div class="progress-line"></div>
-                    <div class="progress-step">
-                        <div class="step-number">3</div>
-                        <div class="step-label">Confirmation</div>
+                    <div class="summary-totals">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">₹0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Delivery Fee:</span>
+                            <span id="delivery-fee">₹40.00</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span id="total">₹40.00</span>
+                        </div>
+                        <div class="free-delivery-note">
+                            <i class="fas fa-info-circle"></i>
+                            Free delivery on orders above ₹300!
+                        </div>
                     </div>
                 </div>
 
-                <div class="payment-content">
-                    <!-- Customer Details -->
-                    <div class="customer-details">
-                        <h3 class="section-title">📋 Customer Details</h3>
-                        <form id="customer-details-form" class="details-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="edit-customer-name">Name:</label>
-                                    <input type="text" id="edit-customer-name" name="name" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-customer-phone">Phone:</label>
-                                    <input type="tel" id="edit-customer-phone" name="phone" pattern="[6-9]\d{9}" required>
-                                </div>
+                <!-- Payment Method -->
+                <div class="payment-method">
+                    <h3><i class="fas fa-credit-card"></i> Payment Method</h3>
+                    <div class="payment-options">
+                        <div class="payment-option selected" data-method="cod">
+                            <div class="payment-icon">
+                                <i class="fas fa-money-bill-wave"></i>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="edit-customer-email">Email:</label>
-                                    <input type="email" id="edit-customer-email" name="email">
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-customer-pincode">Pincode:</label>
-                                    <input type="text" id="edit-customer-pincode" name="pincode" pattern="\d{6}" required>
-                                </div>
+                            <div class="payment-details">
+                                <h4>Cash on Delivery</h4>
+                                <p>Pay when your order arrives</p>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group full-width">
-                                    <label for="edit-customer-address">Address:</label>
-                                    <textarea id="edit-customer-address" name="address" rows="2" required></textarea>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group full-width">
-                                    <label for="edit-customer-landmark">Landmark:</label>
-                                    <input type="text" id="edit-customer-landmark" name="landmark" placeholder="Optional">
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Order Summary -->
-                    <div class="order-summary">
-                        <h3 class="section-title">Order Summary</h3>
-                        <div id="order-items" class="order-items">
-                            <!-- Order items will be populated by JavaScript -->
-                        </div>
-                        <div class="order-totals">
-                            <div class="total-row">
-                                <span>Subtotal:</span>
-                                <span id="subtotal">₹0.00</span>
-                            </div>
-                            <div class="total-row">
-                                <span>Delivery Fee:</span>
-                                <span id="delivery-fee">₹30.00</span>
-                            </div>
-                            <div class="total-row total">
-                                <span>Total:</span>
-                                <span id="total-amount">₹0.00</span>
-                            </div>
-                            <div class="free-delivery-notice">
-                                <i class="fas fa-truck"></i>
-                                <span>Free delivery on orders above ₹300!</span>
+                            <div class="payment-radio">
+                                <i class="fas fa-check-circle"></i>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Payment Method -->
-                    <div class="payment-method">
-                        <h3 class="section-title">💳 Payment Method</h3>
-                        <div class="payment-options">
-                            <div class="payment-option" id="cod-option">
-                                <div class="payment-icon">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                </div>
-                                <div class="payment-info">
-                                    <h4>Cash on Delivery</h4>
-                                    <p>Pay when your order arrives</p>
-                                </div>
-                                <div class="payment-radio">
-                                    <input type="radio" name="payment-method" value="cod">
-                                    <div class="selection-indicator">
-                                        <i class="fas fa-check"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Confirm Order Button -->
-                    <div class="confirm-section">
-                        <button id="confirm-order-btn" class="confirm-btn">
-                            <i class="fas fa-check"></i>
-                            Confirm Order
-                        </button>
-                    </div>
+                <!-- Confirm Order Button -->
+                <div class="confirm-section">
+                    <button id="confirm-order-btn" class="confirm-btn">
+                        <i class="fas fa-check"></i>
+                        Confirm Order
+                    </button>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Success Modal -->
-    <div id="success-modal" class="modal">
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar">
+        <div class="cart-header">
+            <h3>Your Cart</h3>
+            <i class="fas fa-times close-cart"></i>
+        </div>
+        <div class="cart-items">
+            <!-- Cart items will be populated here -->
+        </div>
+        <div class="cart-total">
+            <span>Total:</span>
+            <span id="cart-total-amount">₹0.00</span>
+        </div>
+        <button class="checkout-btn">Proceed to Payment</button>
+    </div>
+
+    <!-- Order Confirmation Modal -->
+    <div id="confirmation-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <i class="fas fa-check-circle success-icon"></i>
-                <h3>Order Confirmed!</h3>
+                <h3><i class="fas fa-check-circle"></i> Order Confirmed!</h3>
+                <span class="close-modal">&times;</span>
             </div>
             <div class="modal-body">
-                <p>Your order is confirmed! Your delicious tacos are on the way.</p>
-                <div class="order-info">
-                    <p><strong>Order ID:</strong> <span id="order-id">-</span></p>
-                    <p><strong>Estimated Delivery:</strong> 30-45 minutes</p>
+                <div class="confirmation-message">
+                    <p>Your order has been successfully placed!</p>
+                    <p>Our team will call you within 1 minute to confirm your order details.</p>
                 </div>
-                <div class="confirmation-notice">
-                    <i class="fas fa-phone"></i>
-                    <p><strong>Important:</strong> If you don't receive the call within 1 minute, please call our number to make sure your order is confirmed.</p>
-                    <p class="phone-number"><i class="fas fa-phone-alt"></i> +91 8076158819</p>
+                <div class="important-note">
+                    <div class="note-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="note-content">
+                        <strong>Important:</strong>
+                        <p>If you don't receive the call within 1 minute, please call our number to make sure your order is confirmed.</p>
+                    </div>
+                </div>
+                <div class="order-details">
+                    <h4>Order Details:</h4>
+                    <p><strong>Order ID:</strong> <span id="order-id">#TTC2025001</span></p>
+                    <p><strong>Estimated Delivery:</strong> 30-45 minutes</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="close-modal" class="btn-secondary">Close</button>
-                <button id="continue-shopping" class="btn-primary">Continue Exploring</button>
+                <button id="continue-shopping-btn" class="continue-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Continue Explore
+                </button>
             </div>
-        </div>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="loading-overlay">
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <p id="loading-text">Processing your order...</p>
         </div>
     </div>
 
     <!-- Scripts -->
+    <script type="module" src="js/main.js"></script>
     <script src="js/payment.js"></script>
 </body>
 </html>

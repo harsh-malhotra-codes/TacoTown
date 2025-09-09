@@ -1,465 +1,468 @@
 // Payment Page JavaScript
-class PaymentManager {
-    constructor() {
-        this.customerData = {};
-        this.orderData = [];
-        this.total = 0;
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize payment page
+    initPaymentPage();
 
-        this.init();
+    // Setup event listeners
+    setupPaymentEventListeners();
+});
+
+function initPaymentPage() {
+    // Load cart items from localStorage
+    loadCartItems();
+
+    // Update order summary
+    updateOrderSummary();
+
+    // Generate order ID
+    generateOrderId();
+}
+
+function setupPaymentEventListeners() {
+    // Confirm order button
+    const confirmBtn = document.getElementById('confirm-order-btn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', handleOrderConfirmation);
     }
 
-    init() {
-        this.loadCustomerData();
-        this.loadOrderData();
-        this.displayCustomerDetails();
-        this.displayOrderSummary();
-        this.setupEventListeners();
+    // Modal close button
+    const closeModalBtn = document.querySelector('.close-modal');
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeConfirmationModal);
     }
 
-    loadCustomerData() {
-        try {
-            const savedData = localStorage.getItem('tacoCustomerData');
-            if (savedData) {
-                this.customerData = JSON.parse(savedData);
-            }
-        } catch (error) {
-            console.error('Error loading customer data:', error);
-        }
+    // Continue shopping button
+    const continueBtn = document.getElementById('continue-shopping-btn');
+    if (continueBtn) {
+        continueBtn.addEventListener('click', handleContinueExplore);
     }
 
-    loadOrderData() {
-        try {
-            const savedCart = localStorage.getItem('tacoCart');
-            if (savedCart) {
-                this.orderData = JSON.parse(savedCart);
-                this.calculateTotal();
-            }
-        } catch (error) {
-            console.error('Error loading order data:', error);
-        }
-    }
 
-    calculateTotal() {
-        const subtotal = this.orderData.reduce((sum, item) => {
-            return sum + (item.price * item.quantity);
-        }, 0);
 
-        // Free delivery for orders above ₹300
-        const deliveryFee = subtotal > 300 ? 0 : 30;
-        this.total = subtotal + deliveryFee;
-        this.deliveryFee = deliveryFee;
-    }
-
-    displayCustomerDetails() {
-        // Populate form fields with customer data
-        const fields = ['name', 'phone', 'email', 'address', 'landmark', 'pincode'];
-
-        fields.forEach(field => {
-            const element = document.getElementById(`edit-customer-${field}`);
-            if (element && this.customerData[field]) {
-                element.value = this.customerData[field];
+    // Close modal when clicking outside
+    const modal = document.getElementById('confirmation-modal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeConfirmationModal();
             }
         });
     }
 
-    displayOrderSummary() {
-        const orderItemsContainer = document.getElementById('order-items');
-        if (!orderItemsContainer) return;
+    // Form validation
+    const customerForm = document.getElementById('customer-form');
+    if (customerForm) {
+        customerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            validateForm();
+        });
+    }
+}
 
-        if (this.orderData.length === 0) {
-            orderItemsContainer.innerHTML = '<p class="text-center text-muted">No items in cart</p>';
-            return;
-        }
+function loadCartItems() {
+    const cart = JSON.parse(localStorage.getItem('tacoCart')) || [];
+    const orderItemsContainer = document.getElementById('order-items');
 
-        const itemsHTML = this.orderData.map(item => `
-            <div class="order-item">
+    if (!orderItemsContainer) return;
+
+    if (cart.length === 0) {
+        orderItemsContainer.innerHTML = '<p class="empty-cart">Your cart is empty</p>';
+        return;
+    }
+
+    orderItemsContainer.innerHTML = cart.map(item => `
+        <div class="order-item">
+            <div class="order-item-details">
                 <div class="order-item-info">
-                    <div class="order-item-image">${item.image || '🌮'}</div>
-                    <div class="order-item-details">
-                        <h4>${item.name}</h4>
-                        <p>Qty: ${item.quantity}</p>
-                    </div>
+                    <h4>${item.name}</h4>
+                    <p>Quantity: ${item.quantity}</p>
                 </div>
-                <div class="order-item-price">₹${(item.price * item.quantity).toFixed(2)}</div>
             </div>
-        `).join('');
+            <div class="order-item-price">₹${(item.price * item.quantity).toFixed(2)}</div>
+        </div>
+    `).join('');
+}
 
-        orderItemsContainer.innerHTML = itemsHTML;
+function loadCustomerData() {
+    const customerData = JSON.parse(localStorage.getItem('tacoCustomerData'));
 
-        // Update totals
-        const subtotal = this.orderData.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const deliveryFee = this.deliveryFee || (subtotal > 300 ? 0 : 30);
-        const total = subtotal + deliveryFee;
+    if (customerData) {
+        // Populate form fields with saved customer data
+        const nameField = document.getElementById('name');
+        const phoneField = document.getElementById('phone');
+        const emailField = document.getElementById('email');
+        const pincodeField = document.getElementById('pincode');
+        const addressField = document.getElementById('address');
+        const landmarkField = document.getElementById('landmark');
 
-        document.getElementById('subtotal').textContent = `₹${subtotal.toFixed(2)}`;
-        document.getElementById('delivery-fee').textContent = deliveryFee === 0 ? 'FREE' : `₹${deliveryFee.toFixed(2)}`;
-        document.getElementById('total-amount').textContent = `₹${total.toFixed(2)}`;
+        if (nameField && customerData.name) nameField.value = customerData.name;
+        if (phoneField && customerData.phone) phoneField.value = customerData.phone;
+        if (emailField && customerData.email) emailField.value = customerData.email;
+        if (pincodeField && customerData.pincode) pincodeField.value = customerData.pincode;
+        if (addressField && customerData.address) addressField.value = customerData.address;
+        if (landmarkField && customerData.landmark) landmarkField.value = customerData.landmark;
     }
+}
 
-    setupEventListeners() {
-        // Confirm order button
-        const confirmBtn = document.getElementById('confirm-order-btn');
-        if (confirmBtn) {
-            confirmBtn.addEventListener('click', () => this.handleOrderConfirmation());
-        }
+function updateOrderSummary() {
+    const cart = JSON.parse(localStorage.getItem('tacoCart')) || [];
 
-        // Continue shopping button
-        const continueBtn = document.getElementById('continue-shopping');
-        if (continueBtn) {
-            continueBtn.addEventListener('click', () => this.handleContinueShopping());
-        }
+    // Calculate subtotal
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-        // Close modal button
-        const closeBtn = document.getElementById('close-modal');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.closeModal());
-        }
+    // Delivery fee (free if subtotal >= 300)
+    const deliveryFee = subtotal >= 300 ? 0 : 30;
 
-        // Payment option selection
-        const paymentOptions = document.querySelectorAll('.payment-option');
-        paymentOptions.forEach(option => {
-            option.addEventListener('click', (e) => this.handlePaymentOptionClick(e));
-        });
-    }
+    // Total
+    const total = subtotal + deliveryFee;
 
-    handlePaymentOptionClick(e) {
-        // Remove active and selected classes from all options
-        const allOptions = document.querySelectorAll('.payment-option');
-        allOptions.forEach(option => {
-            option.classList.remove('active');
-            option.classList.remove('selected');
-        });
+    // Update DOM elements
+    const subtotalEl = document.getElementById('subtotal');
+    const deliveryFeeEl = document.getElementById('delivery-fee');
+    const totalEl = document.getElementById('total');
 
-        // Add active and selected classes to clicked option
-        e.currentTarget.classList.add('active');
-        e.currentTarget.classList.add('selected');
+    if (subtotalEl) subtotalEl.textContent = `₹${subtotal.toFixed(2)}`;
+    if (deliveryFeeEl) deliveryFeeEl.textContent = `₹${deliveryFee.toFixed(2)}`;
+    if (totalEl) totalEl.textContent = `₹${total.toFixed(2)}`;
 
-        // Update radio button
-        const radio = e.currentTarget.querySelector('input[type="radio"]');
-        if (radio) {
-            radio.checked = true;
-        }
-    }
-
-    async handleOrderConfirmation() {
-        // Get updated customer data from form
-        const formData = this.getFormData();
-
-        if (!this.validateForm(formData)) {
-            this.showNotification('Please fill in all required fields correctly', 'error');
-            return;
-        }
-
-        // Check if payment method is selected
-        const selectedPayment = document.querySelector('input[name="payment-method"]:checked');
-        if (!selectedPayment) {
-            this.showNotification('Please select a payment method', 'error');
-            return;
-        }
-
-        // Update customer data with form values
-        this.customerData = formData;
-
-        // Save updated customer data to localStorage
-        this.saveCustomerData();
-
-        this.showLoading('Processing your order...');
-
-        const orderData = {
-            amount: this.total,
-            currency: 'INR',
-            customerData: this.customerData,
-            orderItems: this.orderData.map(item => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price
-            })),
-            paymentMethod: selectedPayment.value
-        };
-
-        try {
-            const response = await fetch('http://localhost:3000/process-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                console.log('Order processed successfully:', result.orderId);
-                this.hideLoading();
-                this.showSuccessModal(result.orderId);
-                this.clearCartData();
-            } else {
-                throw new Error(result.message || 'Failed to process order');
-            }
-        } catch (error) {
-            this.hideLoading();
-            console.error('Order processing failed:', error);
-            console.error('Error details:', error);
-            this.showNotification('Failed to place order. Please try again.', 'error');
-        }
-    }
-
-    getFormData() {
-        return {
-            name: document.getElementById('edit-customer-name').value.trim(),
-            phone: document.getElementById('edit-customer-phone').value.trim(),
-            email: document.getElementById('edit-customer-email').value.trim(),
-            address: document.getElementById('edit-customer-address').value.trim(),
-            landmark: document.getElementById('edit-customer-landmark').value.trim(),
-            pincode: document.getElementById('edit-customer-pincode').value.trim()
-        };
-    }
-
-    validateForm(formData) {
-        // Check required fields
-        if (!formData.name || !formData.phone || !formData.address || !formData.pincode) {
-            return false;
-        }
-
-        // Validate phone number (10 digits, starting with 6-9)
-        const phoneRegex = /^[6-9]\d{9}$/;
-        if (!phoneRegex.test(formData.phone)) {
-            return false;
-        }
-
-        // Validate email if provided
-        if (formData.email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(formData.email)) {
-                return false;
-            }
-        }
-
-        // Validate pincode (6 digits)
-        const pincodeRegex = /^\d{6}$/;
-        if (!pincodeRegex.test(formData.pincode)) {
-            return false;
-        }
-
-        // Check if cart has items
-        if (this.orderData.length === 0) {
-            return false;
-        }
-
-        return true;
-    }
-
-    saveCustomerData() {
-        try {
-            localStorage.setItem('tacoCustomerData', JSON.stringify(this.customerData));
-        } catch (error) {
-            console.error('Error saving customer data:', error);
-        }
-    }
-
-    validateOrder() {
-        // Check if customer data is complete
-        const requiredFields = ['name', 'phone', 'email', 'address', 'pincode'];
-        for (const field of requiredFields) {
-            if (!this.customerData[field] || this.customerData[field].trim() === '') {
-                return false;
-            }
-        }
-
-        // Check if cart has items
-        if (this.orderData.length === 0) {
-            return false;
-        }
-
-        return true;
-    }
-
-    showSuccessModal(orderId) {
-        const modal = document.getElementById('success-modal');
-        const orderIdElement = document.getElementById('order-id');
-
-        if (modal) {
-            if (orderIdElement && orderId) {
-                orderIdElement.textContent = orderId;
-            }
-
-            modal.classList.add('active');
-        }
-    }
-
-    handleContinueShopping() {
-        // Redirect to menu page
-        window.location.href = 'menu.html';
-    }
-
-    closeModal() {
-        const modal = document.getElementById('success-modal');
-        if (modal) {
-            modal.classList.remove('active');
-        }
-    }
-
-    clearCartData() {
-        localStorage.removeItem('tacoCart');
-        localStorage.removeItem('tacoCustomerData');
-    }
-
-    showLoading(message = 'Processing...') {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const loadingText = document.getElementById('loading-text');
-
-        if (loadingOverlay) {
-            if (loadingText) {
-                loadingText.textContent = message;
-            }
-            loadingOverlay.classList.add('active');
-        }
-    }
-
-    hideLoading() {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        if (loadingOverlay) {
-            loadingOverlay.classList.remove('active');
-        }
-    }
-
-    showNotification(message, type = 'info') {
-        // Remove existing notification
-        const existingNotification = document.querySelector('.notification');
-        if (existingNotification) {
-            existingNotification.remove();
-        }
-
-        // Create new notification
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas ${this.getNotificationIcon(type)}"></i>
-                <span>${message}</span>
-            </div>
-        `;
-
-        // Add to page
-        document.body.appendChild(notification);
-
-        // Show notification
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 100);
-
-        // Hide notification after 4 seconds
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 4000);
-    }
-
-    getNotificationIcon(type) {
-        switch (type) {
-            case 'success': return 'fa-check-circle';
-            case 'error': return 'fa-exclamation-circle';
-            case 'warning': return 'fa-exclamation-triangle';
-            default: return 'fa-info-circle';
+    // Update free delivery note
+    const freeDeliveryNote = document.querySelector('.free-delivery-note');
+    if (freeDeliveryNote) {
+        if (subtotal >= 300) {
+            freeDeliveryNote.innerHTML = '<i class="fas fa-check-circle"></i> Congratulations! You have free delivery!';
+            freeDeliveryNote.style.color = '#4CAF50';
+            freeDeliveryNote.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
+            freeDeliveryNote.style.borderColor = 'rgba(76, 175, 80, 0.2)';
+        } else {
+            const remaining = (300 - subtotal).toFixed(2);
+            freeDeliveryNote.innerHTML = `<i class="fas fa-info-circle"></i> Add ₹${remaining} more for free delivery!`;
         }
     }
 }
 
-// Notification styles
-const notificationStyles = `
-    .notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1rem 1.5rem;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-        transform: translateX(400px);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        max-width: 400px;
-        backdrop-filter: blur(10px);
+function generateOrderId() {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    const orderId = `TTC${timestamp}${random}`;
+    const orderIdEl = document.getElementById('order-id');
+
+    if (orderIdEl) {
+        orderIdEl.textContent = orderId;
     }
 
-    .notification.show {
-        transform: translateX(0);
+    return orderId;
+}
+
+function validateForm() {
+    const form = document.getElementById('customer-form');
+    if (!form) return true;
+
+    const requiredFields = ['name', 'phone', 'email', 'pincode', 'address'];
+    let isValid = true;
+
+    requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field && !field.value.trim()) {
+            field.style.borderColor = '#ff5252';
+            isValid = false;
+        } else if (field) {
+            field.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        }
+    });
+
+    // Email validation
+    const email = document.getElementById('email');
+    if (email && email.value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.value)) {
+            email.style.borderColor = '#ff5252';
+            isValid = false;
+        }
     }
 
-    .notification.success {
-        border-left: 4px solid #4CAF50;
+    // Phone validation
+    const phone = document.getElementById('phone');
+    if (phone && phone.value) {
+        const phoneRegex = /^[6-9]\d{9}$/;
+        if (!phoneRegex.test(phone.value.replace(/\s/g, ''))) {
+            phone.style.borderColor = '#ff5252';
+            isValid = false;
+        }
     }
 
-    .notification.error {
-        border-left: 4px solid #f44336;
+    return isValid;
+}
+
+function handleOrderConfirmation() {
+    // Validate form
+    if (!validateForm()) {
+        alert('Please fill in all required fields correctly.');
+        return;
     }
 
-    .notification.warning {
-        border-left: 4px solid #ff9800;
+    // Check if cart is empty
+    const cart = JSON.parse(localStorage.getItem('tacoCart')) || [];
+    if (cart.length === 0) {
+        alert('Your cart is empty. Please add items to your cart first.');
+        return;
     }
 
-    .notification.info {
-        border-left: 4px solid #2196F3;
+    // Generate order ID for this order
+    const currentOrderId = generateOrderId();
+
+    // Show confirmation modal
+    showConfirmationModal();
+
+    // Don't clear cart here - let Continue Explore handle it
+    // localStorage.removeItem('tacoCart');
+
+    // Update cart UI
+    updateCartUI();
+}
+
+function handleContinueExplore() {
+    // Get current order information
+    const cart = JSON.parse(localStorage.getItem('tacoCart')) || [];
+
+    // Calculate totals
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const deliveryFee = subtotal >= 300 ? 0 : 30;
+    const total = subtotal + deliveryFee;
+
+    // Get customer data from form
+    const customerName = document.getElementById('name').value;
+    const customerPhone = document.getElementById('phone').value;
+    const customerEmail = document.getElementById('email').value;
+    const customerPincode = document.getElementById('pincode').value;
+    const customerAddress = document.getElementById('address').value;
+    const customerLandmark = document.getElementById('landmark').value;
+
+    // Get order ID from modal
+    const orderIdEl = document.getElementById('order-id');
+    const orderId = orderIdEl ? orderIdEl.textContent : generateOrderId();
+
+    // Create order object
+    const orderData = {
+        order_id: orderId,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
+        customer_pincode: customerPincode,
+        customer_address: customerAddress,
+        customer_landmark: customerLandmark,
+        order_items: cart,
+        total_amount: total,
+        status: 'confirmed',
+        created_at: new Date().toISOString()
+    };
+
+    // Save to localStorage for admin page
+    const existingOrders = JSON.parse(localStorage.getItem('adminOrders') || '[]');
+    existingOrders.push(orderData);
+    localStorage.setItem('adminOrders', JSON.stringify(existingOrders));
+
+    // Clear cart after saving order
+    localStorage.removeItem('tacoCart');
+
+    // Update cart UI
+    updateCartUI();
+
+    // Close modal
+    closeConfirmationModal();
+
+    // Redirect to homepage
+    window.location.href = 'index.html';
+}
+
+function showConfirmationModal() {
+    const modal = document.getElementById('confirmation-modal');
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeConfirmationModal() {
+    const modal = document.getElementById('confirmation-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function updateCartUI() {
+    // Update cart count in navigation
+    const cart = JSON.parse(localStorage.getItem('tacoCart')) || [];
+    const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+    const cartCountEls = document.querySelectorAll('.cart-count');
+    cartCountEls.forEach(el => {
+        el.textContent = cartCount;
+    });
+
+    // Update cart sidebar if it exists
+    const cartItemsEl = document.querySelector('.cart-items');
+    const cartTotalEl = document.getElementById('cart-total-amount');
+
+    if (cartItemsEl && cart.length === 0) {
+        cartItemsEl.innerHTML = '<p class="empty-cart">Your cart is empty</p>';
+        if (cartTotalEl) cartTotalEl.textContent = '₹0.00';
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Remove existing notification
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
     }
 
-    .notification-content {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: #333;
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        ${message}
+    `;
+
+    // Style based on type
+    if (type === 'success') {
+        notification.style.backgroundColor = '#4CAF50';
+    } else if (type === 'error') {
+        notification.style.backgroundColor = '#f44336';
+    } else {
+        notification.style.backgroundColor = '#2196F3';
     }
 
-    .notification-content i {
-        font-size: 1.2rem;
-    }
+    document.body.appendChild(notification);
 
-    .notification.success .notification-content i {
-        color: #4CAF50;
-    }
+    // Show notification
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
 
-    .notification.error .notification-content i {
-        color: #f44336;
-    }
+    // Hide after 4 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 4000);
+}
 
-    .notification.warning .notification-content i {
-        color: #ff9800;
-    }
-
-    .notification.info .notification-content i {
-        color: #2196F3;
-    }
-
-    .notification-content span {
-        font-weight: 500;
-        line-height: 1.4;
-    }
-
-    @media (max-width: 768px) {
+// Add notification styles if not already present
+if (!document.querySelector('#notification-styles')) {
+    const notificationStyles = document.createElement('style');
+    notificationStyles.id = 'notification-styles';
+    notificationStyles.textContent = `
         .notification {
-            top: 10px;
-            right: 10px;
-            left: 10px;
-            max-width: none;
-            transform: translateY(-100px);
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease-in-out;
+            max-width: 400px;
+            font-weight: 500;
         }
 
         .notification.show {
-            transform: translateY(0);
+            transform: translateX(0);
         }
+
+        .notification i {
+            font-size: 1.2rem;
+        }
+
+        .empty-cart {
+            text-align: center;
+            color: #ccc;
+            font-style: italic;
+            padding: 2rem;
+        }
+
+        /* Form validation styles */
+        .form-group input:invalid,
+        .form-group textarea:invalid {
+            border-color: #ff5252;
+        }
+
+        .form-group input:valid,
+        .form-group textarea:valid {
+            border-color: #4CAF50;
+        }
+    `;
+    document.head.appendChild(notificationStyles);
+}
+
+// Handle page navigation from cart
+function handleCartNavigation() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('from') === 'cart') {
+        // Came from cart, ensure cart data is loaded
+        loadCartItems();
+        updateOrderSummary();
     }
-`;
+}
 
-// Add notification styles to the page
-const styleSheet = document.createElement('style');
-styleSheet.textContent = notificationStyles;
-document.head.appendChild(styleSheet);
+// Save order to backend
+async function saveOrderToBackend(orderId) {
+    try {
+        const cart = JSON.parse(localStorage.getItem('tacoCart')) || [];
 
-// Initialize the payment manager when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    new PaymentManager();
-});
+        // Calculate totals
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const deliveryFee = subtotal >= 300 ? 0 : 30;
+        const total = subtotal + deliveryFee;
+
+        // Get customer data from form
+        const customerName = document.getElementById('name').value;
+        const customerPhone = document.getElementById('phone').value;
+        const customerEmail = document.getElementById('email').value;
+
+        // Create order object for backend
+        const orderData = {
+            orderId: orderId,
+            customerName: customerName,
+            customerEmail: customerEmail,
+            customerPhone: customerPhone,
+            orderItems: cart,
+            totalAmount: total,
+            status: 'confirmed'
+        };
+
+        // Send to backend
+        const response = await fetch('http://localhost:3000/api/orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('Order saved to backend:', result.data);
+            return true;
+        } else {
+            console.error('Failed to save order:', result.message);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error saving order to backend:', error);
+        return false;
+    }
+}
+
+// Call on page load
+handleCartNavigation();

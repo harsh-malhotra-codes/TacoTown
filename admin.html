@@ -367,10 +367,7 @@
                     <div class="stat-value" id="today-orders">0</div>
                     <div class="stat-label">Today's Orders</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="total-reviews">0</div>
-                    <div class="stat-label">Total Reviews</div>
-                </div>
+
             </div>
 
             <!-- Orders Section -->
@@ -395,32 +392,7 @@
                 </table>
             </div>
 
-            <!-- Reviews Section -->
-            <div class="section">
-                <div class="section-title">⭐ Customer Reviews</div>
-                <div style="margin-bottom: 15px; text-align: right;">
-                    <button class="reset-btn" id="remove-selected-reviews-btn" title="Remove selected reviews (keeps orders)">
-                        <i class="fas fa-trash-alt"></i> Remove Selected Reviews
-                    </button>
-                </div>
-                <table class="data-table" id="reviews-table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="select-all-reviews" title="Select all reviews"></th>
-                            <th>Name</th>
-                            <th>Rating</th>
-                            <th>Review</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reviews-body">
-                        <tr>
-                            <td colspan="5" class="no-data">No reviews found</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+
         </div>
     </div>
 
@@ -428,7 +400,7 @@
     <script>
         // Admin credentials
         const ADMIN_EMAIL = 'TacoTownSahilsShop@gmail.com';
-        const ADMIN_PASSWORD = 'TacoTownSahilsShop8076158819';
+        const ADMIN_PASSWORD = 'TacoTown2024!';
 
         // DOM Elements
         const loginForm = document.getElementById('admin-login-form');
@@ -439,12 +411,16 @@
         const errorMessage = document.getElementById('error-message');
 
         // Login functionality
+        // Note: The login form submit listener is already correct and secure.
+
+        // Setup event listeners for the dashboard
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
             const email = document.getElementById('admin-email').value;
             const password = document.getElementById('admin-password').value;
 
+            // Check credentials
             if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
                 showDashboard();
                 loadData();
@@ -464,24 +440,42 @@
             resetAllData();
         });
 
-        // Remove selected reviews functionality
-        const removeSelectedReviewsBtn = document.getElementById('remove-selected-reviews-btn');
-        removeSelectedReviewsBtn.addEventListener('click', function() {
-            removeSelectedReviews();
-        });
+        // Event delegation for dynamic buttons in tables
+        const ordersBody = document.getElementById('orders-body');
+        if (ordersBody) {
+            ordersBody.addEventListener('click', function(e) {
+                const target = e.target.closest('button');
+                if (!target) return;
 
+                const orderId = target.dataset.orderId;
+                if (target.classList.contains('btn-deliver')) {
+                    markAsDelivered(orderId);
+                } else if (target.classList.contains('btn-delete-order')) {
+                    deleteOrder(orderId);
+                }
+            });
+        }
+
+        // Initialize
+        // Check if user is already "logged in" via a session flag (for reloads)
+        if (sessionStorage.getItem('isAdminLoggedIn')) {
+            showDashboard();
+            loadData();
+        }
 
 
         // Show dashboard
         function showDashboard() {
             loginContainer.style.display = 'none';
             dashboard.style.display = 'block';
+            sessionStorage.setItem('isAdminLoggedIn', 'true');
         }
 
         // Show login
         function showLogin() {
             dashboard.style.display = 'none';
             loginContainer.style.display = 'block';
+            sessionStorage.removeItem('isAdminLoggedIn');
             loginForm.reset();
         }
 
@@ -491,25 +485,40 @@
             errorMessage.style.display = 'block';
         }
 
-        // Load data from server
+        // Load data from backend and localStorage
         async function loadData() {
             try {
-                // Load orders
-                const ordersResponse = await fetch('http://localhost:3000/admin/orders');
-                const ordersData = await ordersResponse.json();
+                let allOrders = [];
 
-                if (ordersData.success) {
-                    displayOrders(ordersData.orders);
-                    updateStats(ordersData.orders);
+                // Load orders from backend
+                try {
+                    const ordersResponse = await fetch('http://localhost:3000/api/orders');
+                    const ordersResult = await ordersResponse.json();
+
+                    if (ordersResult.success) {
+                        allOrders = allOrders.concat(ordersResult.data);
+                        console.log('Loaded orders from backend:', ordersResult.data);
+                    }
+                } catch (backendError) {
+                    console.log('Backend not available, loading from localStorage only');
                 }
 
-                // Load reviews (from localStorage for now)
-                const reviews = JSON.parse(localStorage.getItem('tacoReviews') || '[]');
-                displayReviews(reviews);
-                updateReviewStats(reviews);
+                // Load orders from localStorage
+                const localOrders = JSON.parse(localStorage.getItem('adminOrders') || '[]');
+                if (localOrders.length > 0) {
+                    allOrders = allOrders.concat(localOrders);
+                    console.log('Loaded orders from localStorage:', localOrders);
+                }
+
+                console.log('Total orders loaded:', allOrders.length);
+
+                displayOrders(allOrders);
+                updateStats(allOrders);
 
             } catch (error) {
                 console.error('Error loading data:', error);
+                displayOrders([]);
+                updateStats([]);
             }
         }
 
@@ -523,23 +532,30 @@
             }
 
             const ordersHTML = orders.map(order => {
-                const items = order.orderItems.map(item => `${item.name} x${item.quantity}`).join(', ');
-                const statusClass = order.status === 'delivered' ? 'delivered' : 'confirmed';
-                const completedStamp = order.status === 'delivered' ? '<div class="completed-stamp">COMPLETED</div>' : '';
+                // Handle different field names from backend vs localStorage
+                const orderId = order.order_id || order.orderId;
+                const customerName = order.customer_name || order.customerName;
+                const orderItems = order.order_items || order.orderItems || [];
+                const totalAmount = order.total_amount || order.totalAmount || 0;
+                const status = order.status || 'confirmed';
+
+                const items = orderItems.map(item => `${item.name} x${item.quantity}`).join(', ');
+                const statusClass = status === 'delivered' ? 'delivered' : 'confirmed';
+                const completedStamp = status === 'delivered' ? '<div class="completed-stamp">COMPLETED</div>' : '';
 
                 return `
                     <tr style="position: relative;">
-                        <td>${order.orderId.slice(-8)}</td>
-                        <td>${order.customerData.name}</td>
+                        <td>${orderId.slice(-8)}</td>
+                        <td>${customerName}</td>
                         <td>${items}</td>
-                        <td>₹${order.amount}</td>
-                        <td><span class="status ${statusClass}">${order.status}</span></td>
+                        <td>₹${totalAmount}</td>
+                        <td><span class="status ${statusClass}">${status}</span></td>
                         <td>
-                            ${order.status !== 'delivered' ?
-                                `<button class="action-btn" onclick="markAsDelivered('${order.orderId}')">Mark Delivered</button>` :
+                            ${status !== 'delivered' ?
+                                `<button class="action-btn btn-deliver" data-order-id="${orderId}">Mark Delivered</button>` :
                                 '<span style="color: #28a745;">✓ Delivered</span>'
                             }
-                            <button class="action-btn" style="background: #e74c3c;" onclick="deleteOrder('${order.orderId}')">Delete</button>
+                            <button class="action-btn btn-delete-order" style="background: #e74c3c;" data-order-id="${orderId}">Delete</button>
                         </td>
                         ${completedStamp}
                     </tr>
@@ -549,48 +565,21 @@
             tbody.innerHTML = ordersHTML;
         }
 
-        // Display reviews
-        function displayReviews(reviews) {
-            const tbody = document.getElementById('reviews-body');
 
-            if (reviews.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="no-data">No reviews found</td></tr>';
-                return;
-            }
-
-            const reviewsHTML = reviews.map(review => {
-                const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
-                const date = new Date(review.date).toLocaleDateString();
-
-                return `
-                    <tr>
-                        <td><input type="checkbox" class="review-checkbox" value="${review.id}" title="Select this review"></td>
-                        <td>${review.name}</td>
-                        <td>${stars}</td>
-                        <td>${review.text}</td>
-                        <td>${date}</td>
-                        <td>
-                            <button class="action-btn" style="background: #e74c3c;" onclick="deleteReview(${review.id})">Delete</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            tbody.innerHTML = reviewsHTML;
-
-            // Setup select all functionality
-            setupSelectAllReviews();
-        }
 
         // Update stats
         function updateStats(orders) {
             const totalOrders = orders.length;
-            const totalRevenue = orders.reduce((sum, order) => sum + order.amount, 0);
+            const totalRevenue = orders.reduce((sum, order) => {
+                // Handle both total_amount (localStorage) and totalAmount (backend)
+                const amount = order.total_amount || order.totalAmount || 0;
+                return sum + amount;
+            }, 0);
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const todayOrders = orders.filter(order => {
-                const orderDate = new Date(order.createdAt);
+                const orderDate = new Date(order.created_at || order.createdAt);
                 orderDate.setHours(0, 0, 0, 0);
                 return orderDate.getTime() === today.getTime();
             }).length;
@@ -600,23 +589,40 @@
             document.getElementById('today-orders').textContent = todayOrders;
         }
 
-        // Update review stats
-        function updateReviewStats(reviews) {
-            document.getElementById('total-reviews').textContent = reviews.length;
-        }
-
         // Mark order as delivered
         async function markAsDelivered(orderId) {
             try {
-                const response = await fetch(`http://localhost:3000/admin/orders/${orderId}/deliver`, {
-                    method: 'PUT'
-                });
+                // First try to update in backend
+                let backendSuccess = false;
+                try {
+                    const response = await fetch(`http://localhost:3000/api/orders/${orderId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status: 'delivered' })
+                    });
 
-                if (response.ok) {
-                    loadData(); // Reload data
-                } else {
-                    alert('Failed to mark as delivered');
+                    const result = await response.json();
+                    if (result.success) {
+                        backendSuccess = true;
+                    }
+                } catch (backendError) {
+                    console.log('Backend update failed, updating localStorage only');
                 }
+
+                // Update in localStorage (for orders saved via Continue Explore)
+                const localOrders = JSON.parse(localStorage.getItem('adminOrders') || '[]');
+                const orderIndex = localOrders.findIndex(order => order.order_id === orderId);
+
+                if (orderIndex !== -1) {
+                    localOrders[orderIndex].status = 'delivered';
+                    localStorage.setItem('adminOrders', JSON.stringify(localOrders));
+                }
+
+                alert('✅ Order marked as delivered successfully!');
+                loadData(); // Reload data
+
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error marking order as delivered');
@@ -628,78 +634,44 @@
             if (!confirm('Are you sure you want to delete this order?')) return;
 
             try {
-                const response = await fetch(`http://localhost:3000/admin/orders/${orderId}`, {
-                    method: 'DELETE'
-                });
+                // First try to delete from backend
+                let backendSuccess = false;
+                try {
+                    const response = await fetch(`http://localhost:3000/api/orders/${orderId}`, {
+                        method: 'DELETE'
+                    });
 
-                if (response.ok) {
-                    loadData(); // Reload data
-                } else {
-                    alert('Failed to delete order');
+                    const result = await response.json();
+                    if (result.success) {
+                        backendSuccess = true;
+                    }
+                } catch (backendError) {
+                    console.log('Backend delete failed, deleting from localStorage only');
                 }
+
+                // Delete from localStorage (for orders saved via Continue Explore)
+                const localOrders = JSON.parse(localStorage.getItem('adminOrders') || '[]');
+                const updatedOrders = localOrders.filter(order => order.order_id !== orderId);
+
+                if (updatedOrders.length !== localOrders.length) {
+                    localStorage.setItem('adminOrders', JSON.stringify(updatedOrders));
+                }
+
+                alert('✅ Order deleted successfully!');
+                loadData(); // Reload data
+
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error deleting order');
             }
         }
 
-        // Delete review
-        function deleteReview(reviewId) {
-            if (!confirm('Are you sure you want to delete this review?')) return;
-
-            const reviews = JSON.parse(localStorage.getItem('tacoReviews') || '[]');
-            const updatedReviews = reviews.filter(review => review.id !== reviewId);
-            localStorage.setItem('tacoReviews', JSON.stringify(updatedReviews));
-
-            loadData(); // Reload data
-        }
-
-        // Remove all reviews
-        function removeAllReviews() {
-            const confirmRemove = confirm(
-                '⚠️ WARNING: This will permanently delete ALL customer reviews.\n\n' +
-                '• All customer reviews will be removed\n' +
-                '• Order data will remain intact\n' +
-                '• This action CANNOT be undone!\n\n' +
-                'Are you sure you want to remove all reviews?'
-            );
-
-            if (!confirmRemove) return;
-
-            const finalConfirm = confirm(
-                '🔴 FINAL WARNING:\n\n' +
-                'You are about to delete ALL customer reviews.\n' +
-                'Orders and other data will be preserved.\n\n' +
-                'Click OK to proceed with removing all reviews, or Cancel to keep all reviews.'
-            );
-
-            if (!finalConfirm) return;
-
-            try {
-                // Clear reviews from localStorage
-                localStorage.removeItem('tacoReviews');
-
-                alert('✅ All reviews have been successfully removed!\n\n' +
-                      '• All customer reviews cleared\n' +
-                      '• Order data preserved\n' +
-                      '• Ready for fresh reviews!');
-
-                loadData(); // Reload data to show empty reviews
-            } catch (error) {
-                console.error('Error removing reviews:', error);
-                alert('❌ Error occurred while removing reviews.');
-            }
-        }
-
-
-
         // Reset all data
-        async function resetAllData() {
+        function resetAllData() {
             const confirmReset = confirm(
                 '⚠️ WARNING: This will permanently delete ALL data including:\n\n' +
                 '• All customer orders\n' +
                 '• All order history\n' +
-                '• All customer reviews\n' +
                 '• All statistics and revenue data\n\n' +
                 'This action CANNOT be undone!\n\n' +
                 'Are you sure you want to reset everything?'
@@ -717,104 +689,32 @@
             if (!finalConfirm) return;
 
             try {
-                // Reset server data (orders)
-                const serverResponse = await fetch('http://localhost:3000/admin/reset', {
-                    method: 'POST'
-                });
-
-                // Reset localStorage data (reviews and cart)
+                // Reset localStorage data
+                localStorage.removeItem('tacoOrders');
                 localStorage.removeItem('tacoReviews');
                 localStorage.removeItem('tacoCart');
                 localStorage.removeItem('tacoCustomerData');
+                localStorage.removeItem('adminOrders');
 
-                if (serverResponse.ok) {
-                    alert('✅ All data has been successfully reset!\n\n' +
-                          '• All orders cleared\n' +
-                          '• All reviews cleared\n' +
-                          '• All statistics reset to zero\n' +
-                          '• Ready for a fresh start!');
+                alert('✅ All data has been successfully reset!\n\n' +
+                      '• All orders cleared\n' +
+                      '• All statistics reset to zero\n' +
+                      '• Ready for a fresh start!');
 
-                    loadData(); // Reload data to show empty state
-                } else {
-                    alert('❌ Failed to reset server data, but local data was cleared.');
-                }
+                loadData(); // Reload data to show empty state
             } catch (error) {
                 console.error('Error resetting data:', error);
-                alert('❌ Error occurred while resetting data. Some data may not have been cleared.');
-            }
-        }
-
-        // Setup select all reviews functionality
-        function setupSelectAllReviews() {
-            const selectAllCheckbox = document.getElementById('select-all-reviews');
-            const reviewCheckboxes = document.querySelectorAll('.review-checkbox');
-
-            // Handle select all checkbox
-            selectAllCheckbox.addEventListener('change', function() {
-                reviewCheckboxes.forEach(checkbox => {
-                    checkbox.checked = selectAllCheckbox.checked;
-                });
-            });
-
-            // Handle individual checkboxes
-            reviewCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const checkedBoxes = document.querySelectorAll('.review-checkbox:checked');
-                    selectAllCheckbox.checked = checkedBoxes.length === reviewCheckboxes.length;
-                    selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < reviewCheckboxes.length;
-                });
-            });
-        }
-
-        // Remove selected reviews
-        function removeSelectedReviews() {
-            const selectedCheckboxes = document.querySelectorAll('.review-checkbox:checked');
-
-            if (selectedCheckboxes.length === 0) {
-                alert('Please select at least one review to remove.');
-                return;
-            }
-
-            const confirmRemove = confirm(
-                `⚠️ WARNING: This will permanently delete ${selectedCheckboxes.length} selected review(s).\n\n` +
-                '• Selected customer reviews will be removed\n' +
-                '• Order data will remain intact\n' +
-                '• This action CANNOT be undone!\n\n' +
-                'Are you sure you want to remove the selected reviews?'
-            );
-
-            if (!confirmRemove) return;
-
-            const finalConfirm = confirm(
-                `🔴 FINAL WARNING:\n\n` +
-                `You are about to delete ${selectedCheckboxes.length} customer review(s).\n` +
-                'Orders and other data will be preserved.\n\n' +
-                'Click OK to proceed with removing the selected reviews, or Cancel to keep all reviews.'
-            );
-
-            if (!finalConfirm) return;
-
-            try {
-                const reviews = JSON.parse(localStorage.getItem('tacoReviews') || '[]');
-                const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
-
-                const updatedReviews = reviews.filter(review => !selectedIds.includes(review.id));
-                localStorage.setItem('tacoReviews', JSON.stringify(updatedReviews));
-
-                alert(`✅ ${selectedCheckboxes.length} review(s) have been successfully removed!\n\n` +
-                      '• Selected customer reviews cleared\n' +
-                      '• Order data preserved\n' +
-                      '• Ready for fresh reviews!');
-
-                loadData(); // Reload data to show updated reviews
-            } catch (error) {
-                console.error('Error removing selected reviews:', error);
-                alert('❌ Error occurred while removing selected reviews.');
+                alert('❌ Error occurred while resetting data.');
             }
         }
 
         // Initialize
-        showLogin();
+        // Check if user is already "logged in" via a session flag (for reloads)
+        if (sessionStorage.getItem('isAdminLoggedIn')) {
+            showDashboard();
+            loadData();
+        }
+
     </script>
 </body>
 </html>

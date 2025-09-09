@@ -1,9 +1,24 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config(); // Load environment variables
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Initialize Supabase with service role key for admin operations
+const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false
+    }
+});
 
 // Middleware
 app.use(cors());
@@ -13,96 +28,189 @@ app.use(express.urlencoded({ extended: true })); // Use built-in express.urlenco
 // Store for orders (in production, use a database)
 const orders = new Map();
 
-
-
-// Admin credentials
-const ADMIN_EMAIL = 'TacoTownSahilsShop@gmail.com';
-const ADMIN_PASSWORD = 'TacoTownSahilsShop8076158819'; // Your simple password for the admin login page
-
 // Routes
 
-// Admin login
-app.post('/admin/login', (req, res) => {
-    const { email, password } = req.body;
+// Save order to Supabase
+app.post('/api/orders', async (req, res) => {
+    try {
+        const {
+            orderId,
+            customerName,
+            customerEmail,
+            customerPhone,
+            customerPincode,
+            customerAddress,
+            customerLandmark,
+            orderItems,
+            totalAmount,
+            status = 'confirmed'
+        } = req.body;
 
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        if (!orderId || !customerName || !orderItems || !totalAmount) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields'
+            });
+        }
+
+        // Try with supabaseAdmin first (bypasses RLS)
+        let { data, error } = await supabaseAdmin
+            .from('orders')
+            .insert([
+                {
+                    order_id: orderId,
+                    customer_name: customerName,
+                    customer_email: customerEmail,
+                    customer_phone: customerPhone,
+                    order_items: orderItems,
+                    total_amount: totalAmount,
+                    status: status
+                }
+            ])
+            .select();
+
+        // If admin fails, try regular client
+        if (error) {
+            console.log('Admin insert failed, trying regular client:', error.message);
+            ({ data, error } = await supabase
+                .from('orders')
+                .insert([
+                    {
+                        order_id: orderId,
+                        customer_name: customerName,
+                        customer_email: customerEmail,
+                        customer_phone: customerPhone,
+                        order_items: orderItems,
+                        total_amount: totalAmount,
+                        status: status
+                    }
+                ])
+                .select());
+        }
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to save order'
+            });
+        }
+
+        console.log('Order saved to Supabase:', data);
         res.json({
             success: true,
-            message: 'Login successful',
-            redirect: '/admin.html'
+            message: 'Order saved successfully',
+            data: data
         });
-    } else {
-        res.status(401).json({
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({
             success: false,
-            message: 'Invalid credentials'
+            message: 'Internal server error'
         });
     }
 });
 
-// Get all orders for admin
-app.get('/admin/orders', (req, res) => {
-    const ordersArray = Array.from(orders.values())
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Latest first
+// Get all orders from Supabase
+app.get('/api/orders', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-    res.json({
-        success: true,
-        orders: ordersArray
-    });
-});
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to fetch orders'
+            });
+        }
 
-// Mark order as delivered
-app.put('/admin/orders/:orderId/deliver', (req, res) => {
-    const { orderId } = req.params;
-
-    if (orders.has(orderId)) {
-        const order = orders.get(orderId);
-        order.status = 'delivered';
-        order.deliveredAt = new Date();
-        console.log(`Order ${orderId} marked as delivered`);
         res.json({
             success: true,
-            message: 'Order marked as delivered',
+            data: data
         });
-    } else {
-        res.status(404).json({
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({
             success: false,
-            message: 'Order not found',
+            message: 'Internal server error'
+        });
+    }
+});
+
+// Update order status
+app.put('/api/orders/:orderId', async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { status } = req.body;
+
+        if (!status) {
+            return res.status(400).json({
+                success: false,
+                message: 'Status is required'
+            });
+        }
+
+        const { data, error } = await supabase
+            .from('orders')
+            .update({ status: status })
+            .eq('order_id', orderId)
+            .select();
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to update order'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Order updated successfully',
+            data: data
+        });
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
         });
     }
 });
 
 // Delete order
-app.delete('/admin/orders/:orderId', (req, res) => {
-    const { orderId } = req.params;
+app.delete('/api/orders/:orderId', async (req, res) => {
+    try {
+        const { orderId } = req.params;
 
-    if (orders.has(orderId)) {
-        orders.delete(orderId);
-        console.log(`Order ${orderId} deleted`);
+        const { error } = await supabase
+            .from('orders')
+            .delete()
+            .eq('order_id', orderId);
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to delete order'
+            });
+        }
+
         res.json({
             success: true,
-            message: 'Order deleted successfully',
+            message: 'Order deleted successfully'
         });
-    } else {
-        res.status(404).json({
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({
             success: false,
-            message: 'Order not found',
+            message: 'Internal server error'
         });
     }
 });
-
-// Reset all data
-app.post('/admin/reset', (req, res) => {
-    // Clear all orders
-    orders.clear();
-
-    console.log('All orders and data have been reset');
-    res.json({
-        success: true,
-        message: 'All data has been reset successfully',
-    });
-});
-
-
 
 // Contact form submission
 app.post('/contact', (req, res) => {
@@ -123,43 +231,7 @@ app.post('/contact', (req, res) => {
     });
 });
 
-// Process order
-app.post('/process-order', async (req, res) => {
-    try {
-        const { amount, currency = 'INR', customerData, orderItems, paymentMethod = 'ONLINE' } = req.body;
 
-        // Generate order ID
-        const orderId = 'ORDER_' + Date.now();
-
-        // Store order details
-        orders.set(orderId, {
-            orderId: orderId,
-            amount: amount,
-            currency,
-            customerData,
-            orderItems,
-            paymentMethod,
-            status: 'confirmed',
-            createdAt: new Date(),
-        });
-
-
-
-        console.log(`New order received: ${orderId}`);
-
-        res.json({
-            success: true,
-            orderId: orderId,
-            message: 'Order processed successfully!',
-        });
-    } catch (error) {
-        console.error('Error processing order:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to process order',
-        });
-    }
-});
 
 // Health check
 app.get('/health', (req, res) => {

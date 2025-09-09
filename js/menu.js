@@ -23,25 +23,41 @@ let cart = [];
 function handleDeliverySubmit(e) {
     e.preventDefault();
 
+    // Check if delivery form elements exist
+    const nameField = document.getElementById('delivery-name');
+    const phoneField = document.getElementById('delivery-phone');
+    const addressField = document.getElementById('delivery-address');
+    const landmarkField = document.getElementById('delivery-landmark');
+    const pincodeField = document.getElementById('delivery-pincode');
+
+    if (!nameField || !phoneField || !addressField || !pincodeField) {
+        console.warn('Delivery form elements not found, proceeding to payment page');
+        window.location.href = 'payment.html';
+        return;
+    }
+
     // Get form data
-    const name = document.getElementById('delivery-name').value;
-    const phone = document.getElementById('delivery-phone').value;
-    const address = document.getElementById('delivery-address').value;
-    const landmark = document.getElementById('delivery-landmark').value;
-    const pincode = document.getElementById('delivery-pincode').value;
+    const name = nameField.value;
+    const phone = phoneField.value;
+    const address = addressField.value;
+    const landmark = landmarkField ? landmarkField.value : '';
+    const pincode = pincodeField.value;
 
     // Save customer data to localStorage for payment page
     const customerData = {
         name: name,
         phone: phone,
+        email: '', // Email not collected in delivery form
         address: address,
         landmark: landmark,
         pincode: pincode
     };
     localStorage.setItem('tacoCustomerData', JSON.stringify(customerData));
 
-    // Close modal
-    deliveryModal.classList.remove('active');
+    // Close modal if it exists
+    if (deliveryModal) {
+        deliveryModal.classList.remove('active');
+    }
 
     // Redirect to payment page
     window.location.href = 'payment.html';
@@ -201,16 +217,7 @@ function setupEventListeners() {
     checkoutBtn.addEventListener('click', (e) => {
         e.preventDefault();
         if (cart.length > 0) {
-            // Save default customer data to localStorage for payment page
-            const customerData = {
-                name: 'HARSH MALHOTRA',
-                phone: '7889848844',
-                address: 'new plot state motor garage, jammu',
-                landmark: 'baddvvvvvds',
-                pincode: '144411'
-            };
-            localStorage.setItem('tacoCustomerData', JSON.stringify(customerData));
-            window.location.href = 'payment.html';
+            window.location.href = 'payment.html'; // Proceed to payment without setting default data
         } else {
             alert('Your cart is empty. Add some tacos first!');
         }
@@ -268,7 +275,8 @@ function addToCart(e) {
                 id: menuItem.id,
                 name: menuItem.name,
                 price: menuItem.price,
-                quantity: 1
+                quantity: 1,
+                image: menuItem.image || '' // Ensure image is saved
             });
         }
     }

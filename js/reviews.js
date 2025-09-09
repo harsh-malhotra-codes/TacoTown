@@ -8,6 +8,11 @@ class ReviewsManager {
     }
 
     init() {
+        // If localStorage was empty, the constructor loaded sample data.
+        // We save it now to ensure all pages are in sync.
+        if (!localStorage.getItem('tacoReviews')) {
+            this.saveReviews();
+        }
         this.setupEventListeners();
         this.loadReviewsGrid();
         this.setupRatingSystem();

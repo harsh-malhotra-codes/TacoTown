@@ -60,8 +60,8 @@ Visit `http://localhost:3000` to access the customer ordering website.
 Access the admin dashboard at: `http://localhost:3000/admin.html`
 
 **Admin Credentials:**
-- Email: `vermaharsh78898@gmail.com`
-- Password: `Jammu@123`
+- Email: `TacoTownSahilsShop@gmail.com`
+- Password: `TacoTownSahilsShop8076158819`
 
 **Note:** These are hardcoded credentials for demonstration. In production, implement proper authentication.
 
