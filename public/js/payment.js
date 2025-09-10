@@ -272,6 +272,10 @@ async function handleContinueExplore() {
         showNotification('Order saved locally (backend unavailable)', 'warning');
     }
 
+    // SECOND: Send order data to Formspree for email notification
+    console.log('Sending order data to Formspree...');
+    await sendToFormspree(orderData);
+
     // Clear cart after saving order
     localStorage.removeItem('tacoCart');
 
@@ -450,8 +454,8 @@ async function saveOrderToBackend(orderId, orderData) {
             // Local development - use local server
             endpoint = '/api/orders';
         } else {
-            // Production - use Netlify functions
-            endpoint = '/.netlify/functions/orders';
+            // Production - use Fly.io backend
+            endpoint = 'https://your-app-name.fly.dev/api/orders';
         }
 
         console.log('Using endpoint:', endpoint);
@@ -477,6 +481,51 @@ async function saveOrderToBackend(orderId, orderData) {
     } catch (error) {
         console.error('❌ Error saving order to backend:', error);
         return false;
+    }
+}
+
+// Send order data to Formspree for email notification
+async function sendToFormspree(orderData) {
+    try {
+        // Prepare form data for Formspree
+        const formData = new FormData();
+
+        // Add customer information
+        formData.append('name', orderData.customer_name);
+        formData.append('email', orderData.customer_email);
+        formData.append('phone', orderData.customer_phone);
+        formData.append('pincode', orderData.customer_pincode);
+        formData.append('address', orderData.customer_address);
+        if (orderData.customer_landmark) {
+            formData.append('landmark', orderData.customer_landmark);
+        }
+
+        // Add order details
+        formData.append('order_id', orderData.order_id);
+        formData.append('total_amount', `₹${orderData.total_amount.toFixed(2)}`);
+
+        // Add order items as formatted text
+        const orderItemsText = orderData.order_items.map(item =>
+            `${item.name} (x${item.quantity}) - ₹${(item.price * item.quantity).toFixed(2)}`
+        ).join('\n');
+        formData.append('order_items', orderItemsText);
+
+        // Add timestamp
+        formData.append('order_date', new Date(orderData.created_at).toLocaleString());
+
+        // Send to Formspree
+        const response = await fetch('https://formspree.io/f/mqadwbaz', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            console.log('✅ Order data sent to Formspree successfully');
+        } else {
+            console.error('❌ Failed to send to Formspree:', response.status, response.statusText);
+        }
+    } catch (error) {
+        console.error('❌ Error sending to Formspree:', error);
     }
 }
 

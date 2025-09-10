@@ -83,6 +83,94 @@
     position: relative;
 }
 
+/* Google Maps Section */
+.google-maps-section {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.google-maps-section .section-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #fff;
+    font-weight: 700;
+}
+
+.google-maps-section .section-subtitle {
+    font-size: 1.1rem;
+    color: #ccc;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+}
+
+.maps-container {
+    margin-top: 2rem;
+}
+
+.map-placeholder {
+    background: linear-gradient(135deg, rgba(212, 167, 106, 0.1), rgba(212, 167, 106, 0.05));
+    border: 2px solid rgba(212, 167, 106, 0.2);
+    border-radius: 15px;
+    padding: 3rem 2rem;
+    display: inline-block;
+    min-width: 300px;
+    transition: all 0.3s ease;
+}
+
+.map-placeholder:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(212, 167, 106, 0.2);
+    border-color: rgba(212, 167, 106, 0.4);
+}
+
+.map-placeholder i {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.map-placeholder h3 {
+    color: #fff;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.map-placeholder p {
+    color: #ccc;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+.maps-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 2rem;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    color: #000;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(212, 167, 106, 0.3);
+}
+
+.maps-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(212, 167, 106, 0.4);
+    text-decoration: none;
+    color: #000;
+}
+
+.maps-btn i {
+    margin-right: 8px;
+}
+
+/* Legacy Reviews Grid (if needed) */
 .reviews-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

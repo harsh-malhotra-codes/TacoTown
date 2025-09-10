@@ -514,7 +514,7 @@ async function sendToFormspree(orderData) {
         formData.append('order_date', new Date(orderData.created_at).toLocaleString());
 
         // Send to Formspree
-        const response = await fetch('https://formspree.io/f/xeolnlbz', {
+        const response = await fetch('https://formspree.io/f/mqadwbaz', {
             method: 'POST',
             body: formData
         });

@@ -193,10 +193,17 @@ function setupEventListeners() {
         });
     }
 
-    // Cart toggle
+    // Cart toggle - Navigation cart icon
     if (cartIcon) {
         cartIcon.addEventListener('click', toggleCart);
     }
+
+    // Cart toggle - Floating cart button
+    const cartToggle = document.getElementById('cart-toggle');
+    if (cartToggle) {
+        cartToggle.addEventListener('click', toggleCart);
+    }
+
     if (closeCart) {
         closeCart.addEventListener('click', toggleCart);
     }
@@ -204,7 +211,10 @@ function setupEventListeners() {
     // Close cart when clicking outside
     if (cartSidebar && cartIcon) {
         document.addEventListener('click', (e) => {
-            if (!cartSidebar.contains(e.target) && !cartIcon.contains(e.target)) {
+            const cartToggle = document.getElementById('cart-toggle');
+            if (!cartSidebar.contains(e.target) &&
+                !cartIcon.contains(e.target) &&
+                (!cartToggle || !cartToggle.contains(e.target))) {
                 cartSidebar.classList.remove('active');
             }
         });

@@ -26,6 +26,12 @@ A complete food ordering system with admin dashboard, order management, and cust
 - Order status tracking
 - No external messaging (WhatsApp/Gmail removed)
 
+### ✅ Email Notifications
+- **Formspree Integration**: Automatic email notifications for new orders
+- **Order Details in Email**: Complete customer info, order items, and totals
+- **Real-time Alerts**: Instant email delivery when customers place orders
+- **No Setup Required**: Works out-of-the-box with Formspree service
+
 ### ✅ Responsive Design
 - Dark theme with yellow accents
 - Mobile-friendly interface
@@ -64,6 +70,32 @@ Access the admin dashboard at: `http://localhost:3000/admin.html`
 - Password: `TacoTownSahilsShop8076158819`
 
 **Note:** These are hardcoded credentials for demonstration. In production, implement proper authentication.
+
+### 4. Email Notifications Setup (Formspree)
+
+The system includes automatic email notifications for new orders using Formspree.
+
+**Current Configuration:**
+- Formspree endpoint: `https://formspree.io/f/xeolnlbz`
+- Email notifications are sent when customers click "Continue Explore"
+
+**To Use Your Own Formspree Account:**
+
+1. **Create Formspree Account**: Visit [formspree.io](https://formspree.io) and create a free account
+2. **Create New Form**: Set up a new form in your Formspree dashboard
+3. **Get Form Endpoint**: Copy the endpoint URL (format: `https://formspree.io/f/YOUR_FORM_ID`)
+4. **Update Code**: Replace the endpoint in these files:
+   - `js/payment.js` (line ~400)
+   - `public/js/payment.js` (line ~400)
+   - `Frontend/js/payment.js` (line ~400)
+
+**What Gets Sent in Email:**
+- Customer name, email, phone, address
+- Order ID and total amount
+- Complete list of ordered items with quantities
+- Order timestamp
+
+**Note:** Formspree offers 50 free submissions per month. Upgrade for higher limits.
 
 ## API Endpoints
 
